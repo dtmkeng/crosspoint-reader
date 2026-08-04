@@ -634,6 +634,17 @@ int GfxRenderer::getTextWidth(const int fontId, const char* text, const EpdFontF
   std::string visual;
   const char* renderedText = resolveVisualText(text, visual, baseDir);
 
+  // Scan pass: record the text for the batch prewarm and skip the per-glyph
+  // walk. The prewarm scope has just cleared the SD glyph caches, so measuring
+  // here drags every glyph through the on-demand ring — a long Thai chapter
+  // title measured by the status bar's truncation loop cost 25s per page.
+  // Returning 0 makes truncation/centering no-ops for this pass; the real
+  // render pass re-measures against the prewarmed cache.
+  if (fontCacheManager_ && fontCacheManager_->isScanning()) {
+    fontCacheManager_->recordText(renderedText, resolvedFontId, style);
+    return 0;
+  }
+
   int w = 0, h = 0;
   fontIt->second.getTextDimensions(renderedText, &w, &h, style);
   return w;

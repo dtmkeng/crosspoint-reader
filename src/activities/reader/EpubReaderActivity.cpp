@@ -1583,6 +1583,9 @@ void EpubReaderActivity::renderContents(std::unique_ptr<Page> page, const int or
   // during the scan; the non-text bar graphics redraw identically below.
   renderStatusBar();  // scan pass
   scope.endScanAndPrewarm();
+  // Per-font SD I/O stats for this prewarm (seeks / read-ms / glyphs): tells a
+  // slow prewarm apart from a slow SD card.
+  fcm->logStats("page-prewarm");
   const auto tPrewarm = millis();
 
   const bool pageHasImages = page->hasImages();
