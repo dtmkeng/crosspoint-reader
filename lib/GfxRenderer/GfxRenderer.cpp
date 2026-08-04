@@ -645,6 +645,16 @@ int GfxRenderer::getTextWidth(const int fontId, const char* text, const EpdFontF
     return 0;
   }
 
+  // Safety net for measurements no screen prewarmed (dialogs, one-off labels):
+  // the per-glyph walk below would otherwise open the .cpfont once per
+  // un-resident glyph through the 8-slot ring. Batch-load the string first —
+  // one file open with sorted seeks; already-resident strings pass the subset
+  // check with zero SD reads.
+  if (fontCacheManager_ && sdCardFonts_.find(resolvedFontId) != sdCardFonts_.end()) {
+    fontCacheManager_->prewarmCache(resolvedFontId, renderedText,
+                                    static_cast<uint8_t>(1u << (static_cast<uint8_t>(style) & 0x03)));
+  }
+
   int w = 0, h = 0;
   fontIt->second.getTextDimensions(renderedText, &w, &h, style);
   return w;
@@ -1744,6 +1754,12 @@ std::vector<std::string> GfxRenderer::wrappedText(const int fontId, const char* 
   std::vector<std::string> lines;
 
   if (!text || maxWidth <= 0 || maxLines <= 0) return lines;
+
+  // Warm the whole string once before the per-word measuring below: the
+  // safety net in getTextWidth() prewarms whatever it measures, and word1 is
+  // not a superset of word2 — without this, each word would rebuild the SD
+  // font's resident tables instead of passing the subset check.
+  getTextWidth(fontId, text, style);
 
   std::string remaining = text;
   std::string currentLine;
