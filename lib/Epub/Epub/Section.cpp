@@ -31,11 +31,13 @@ namespace {
 //      match. Keeps <br>-per-paragraph books (common CJK formatting) from
 //      re-adding container spacing at every paragraph.
 // v35: Persist a uint32_t visible-text start offset for every page.
-// v36: Thai cluster line breaking (hasCjkBreakOpportunityBetween handles Thai),
+// v36: Ruby no longer overflows the right border when justifying, and CJK lines
+//      no longer break short, so cached pages laid out by older versions differ.
+// v37: Thai cluster line breaking (hasCjkBreakOpportunityBetween handles Thai),
 //      so cached pages laid out by older versions no longer match.
-// v37: Thai dictionary word segmentation (ThaiDict longest match in
+// v38: Thai dictionary word segmentation (ThaiDict longest match in
 //      cjkCharacterBreakByteOffsets) changes Thai break tokens again.
-constexpr uint8_t SECTION_FILE_VERSION = 37;
+constexpr uint8_t SECTION_FILE_VERSION = 38;
 // Written into the version field while a build is in progress; patched to
 // SECTION_FILE_VERSION only when the build is finalized. An abandoned /
 // crash-interrupted .bin therefore carries version 0, which loadSectionFile rejects
